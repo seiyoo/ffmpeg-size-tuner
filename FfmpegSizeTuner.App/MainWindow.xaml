@@ -1,0 +1,212 @@
+<Window x:Class="FfmpegSizeTuner.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="ffmpeg Size Tuner" Height="920" Width="1040"
+        WindowStartupLocation="CenterScreen" AllowDrop="True"
+        FontFamily="Meiryo UI" FontSize="12" MinWidth="900" MinHeight="700">
+  <Grid Margin="12">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="*" MinHeight="120"/>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="150"/>
+    </Grid.RowDefinitions>
+
+    <!-- ソース -->
+    <Border Grid.Row="0" BorderBrush="#B0B0B0" BorderThickness="1" Background="#FAFAFA"
+            CornerRadius="3" Padding="8" Margin="0,0,0,6">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <TextBlock Grid.Column="0" x:Name="SrcText" Foreground="#707070"
+                   TextTrimming="CharacterEllipsis"
+                   Text="ここに動画をドラッグ &amp; ドロップ（複数まとめてドロップすると現在の設定でキューに入ります）"/>
+        <Button Grid.Column="1" x:Name="BrowseBtn" Content="参照..." Width="80" Height="26"
+                Margin="8,0,0,0" Click="BrowseBtn_Click"/>
+      </Grid>
+    </Border>
+
+    <!-- 素材情報 -->
+    <Border Grid.Row="1" BorderBrush="#E0E0E0" BorderThickness="1" Background="#F5F7FA"
+            CornerRadius="3" Padding="8" Margin="0,0,0,6">
+      <TextBlock x:Name="InfoText" Foreground="#404040" Text="—" TextWrapping="Wrap"/>
+    </Border>
+
+    <!-- 設定 -->
+    <GroupBox Grid.Row="2" Header=" 設定 " Padding="8" Margin="0,0,0,6">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Grid.Column="0" Text="指定方法" Margin="0,0,12,6"/>
+        <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,6">
+          <RadioButton x:Name="ModeSize" Content="サイズで指定" GroupName="tg" IsChecked="True"
+                       VerticalAlignment="Center" Margin="0,0,14,0" Checked="Setting_Changed"/>
+          <RadioButton x:Name="ModeQuality" Content="画質で指定" GroupName="tg"
+                       VerticalAlignment="Center" Margin="0,0,14,0" Checked="Setting_Changed"/>
+          <TextBlock x:Name="ModeHint" Style="{StaticResource Hint}"/>
+        </StackPanel>
+
+        <TextBlock Grid.Row="1" Grid.Column="0" Text="目標" Margin="0,0,12,6" VerticalAlignment="Top"/>
+        <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,0,6">
+          <StackPanel Orientation="Horizontal">
+            <TextBlock x:Name="RdSize" Text="—" FontSize="22" FontWeight="Medium"/>
+            <TextBlock x:Name="RdKbps" Foreground="#606060" Margin="10,0,0,0"/>
+            <TextBlock x:Name="RdPct" Style="{StaticResource Hint}" Margin="10,0,0,0"/>
+          </StackPanel>
+          <Slider x:Name="TargetSlider" Minimum="0" Maximum="10" TickFrequency="1"
+                  IsSnapToTickEnabled="True" IsEnabled="False" Margin="0,2,0,0"
+                  ValueChanged="TargetSlider_ValueChanged"/>
+          <Grid Height="34" Margin="0,2,0,0">
+            <Grid x:Name="BandStrip" Height="16" VerticalAlignment="Top"
+                  SizeChanged="BandStrip_SizeChanged"/>
+            <Canvas x:Name="MarkLayer" Height="16" VerticalAlignment="Top" IsHitTestVisible="False"/>
+            <Canvas x:Name="TickLayer" Height="16" VerticalAlignment="Bottom" IsHitTestVisible="False"/>
+          </Grid>
+        </StackPanel>
+
+        <TextBlock Grid.Row="2" Grid.Column="0" Text="方式" Margin="0,0,12,6"/>
+        <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,6">
+          <RadioButton x:Name="ModeCrf" Content="画質優先（実測してCRF決定・1パス）" GroupName="md"
+                       IsChecked="True" VerticalAlignment="Center" Margin="0,0,14,0" Checked="Setting_Changed"/>
+          <RadioButton x:Name="ModeAbr" Content="サイズ厳守（2パス）" GroupName="md"
+                       VerticalAlignment="Center" Checked="Setting_Changed"/>
+        </StackPanel>
+
+        <TextBlock Grid.Row="3" Grid.Column="0" Text="出力" Margin="0,0,12,6"/>
+        <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,6">
+          <TextBlock Text="解像度" Margin="0,0,4,0"/>
+          <ComboBox x:Name="ResBox" Width="100" Height="22" SelectedIndex="0" Margin="0,0,14,0"
+                    SelectionChanged="Setting_Changed">
+            <ComboBoxItem Content="元のまま"/>
+            <ComboBoxItem Content="1080p"/>
+            <ComboBoxItem Content="720p"/>
+          </ComboBox>
+          <TextBlock Text="速度" Margin="0,0,4,0"/>
+          <ComboBox x:Name="PresetBox" Width="150" Height="22" SelectedIndex="1" Margin="0,0,14,0"
+                    SelectionChanged="Setting_Changed">
+            <ComboBoxItem Content="fast（速い）"/>
+            <ComboBoxItem Content="medium（推奨）"/>
+            <ComboBoxItem Content="slow（高効率・低速）"/>
+          </ComboBox>
+          <TextBlock Text="音声" Margin="0,0,4,0"/>
+          <ComboBox x:Name="AudioBox" Width="120" Height="22" SelectedIndex="0"
+                    SelectionChanged="Setting_Changed">
+            <ComboBoxItem Content="AAC 128k"/>
+            <ComboBoxItem Content="AAC 96k"/>
+            <ComboBoxItem Content="そのままコピー"/>
+          </ComboBox>
+        </StackPanel>
+
+        <TextBlock Grid.Row="4" Grid.Column="0" Text="出力名" Margin="0,0,12,4"/>
+        <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,4">
+          <RadioButton x:Name="SuffixMode" Content="サフィックス" GroupName="nm" IsChecked="True"
+                       VerticalAlignment="Center" Margin="0,0,6,0" Checked="Setting_Changed"/>
+          <TextBox x:Name="SuffixBox" Width="90" Height="22" Text="_cmp"
+                   VerticalContentAlignment="Center" Margin="0,0,18,0" TextChanged="Setting_Changed"/>
+          <RadioButton x:Name="NameMode" Content="名前を指定" GroupName="nm"
+                       VerticalAlignment="Center" Margin="0,0,6,0" Checked="Setting_Changed"/>
+          <TextBox x:Name="NameBox" Width="240" Height="22" IsEnabled="False"
+                   VerticalContentAlignment="Center" TextChanged="Setting_Changed"/>
+        </StackPanel>
+
+        <TextBlock Grid.Row="5" Grid.Column="1" x:Name="OutPreview" Text="—"
+                   Foreground="#606060" TextTrimming="CharacterEllipsis"/>
+      </Grid>
+    </GroupBox>
+
+    <!-- 到達する画質の説明 -->
+    <Border Grid.Row="3" x:Name="DescCard" BorderThickness="0" Background="#F5F7FA"
+            CornerRadius="3" Padding="10" Margin="0,0,0,6">
+      <StackPanel>
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+          <TextBlock x:Name="DescName" FontSize="15" FontWeight="Medium" Text="—"/>
+          <TextBlock x:Name="DescRange" FontSize="11" Margin="12,0,0,0"/>
+        </StackPanel>
+        <TextBlock x:Name="DescBody" TextWrapping="Wrap" Text="動画を読み込むと、この設定で到達する画質の説明が出ます。"/>
+        <TextBlock x:Name="DescWarn" TextWrapping="Wrap" Margin="0,6,0,0"
+                   Foreground="#A32D2D" Visibility="Collapsed"/>
+      </StackPanel>
+    </Border>
+
+    <!-- 単体操作 -->
+    <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,6">
+      <Button x:Name="SampleBtn" Content="サンプルで確認" Width="130" Height="30" Margin="0,0,8,0"
+              IsEnabled="False" Click="SampleBtn_Click"/>
+      <Button x:Name="MeasureBtn" Content="測定だけ" Width="100" Height="30" Margin="0,0,8,0"
+              IsEnabled="False" Click="MeasureBtn_Click"/>
+      <Button x:Name="AddBtn" Content="キューに追加" Width="120" Height="30"
+              IsEnabled="False" FontWeight="Bold" Click="AddBtn_Click"/>
+    </StackPanel>
+
+    <!-- キュー -->
+    <DataGrid Grid.Row="5" x:Name="QueueGrid" AutoGenerateColumns="False" IsReadOnly="True"
+              CanUserAddRows="False" CanUserDeleteRows="False" HeadersVisibility="Column"
+              GridLinesVisibility="Horizontal" RowHeight="24" SelectionMode="Extended"
+              Margin="0,0,0,6">
+      <DataGrid.Columns>
+        <DataGridTextColumn Header="ファイル" Binding="{Binding FileName}" Width="2*"/>
+        <DataGridTextColumn Header="目標" Binding="{Binding SizeTarget}" Width="Auto"/>
+        <DataGridTextColumn Header="解像度" Binding="{Binding Resolution}" Width="Auto"/>
+        <DataGridTextColumn Header="速度" Binding="{Binding Speed}" Width="Auto"/>
+        <DataGridTextColumn Header="方式" Binding="{Binding Method}" Width="Auto"/>
+        <DataGridTextColumn Header="出力名" Binding="{Binding OutputName}" Width="1.4*"/>
+        <DataGridTextColumn Header="状態" Binding="{Binding StatusText}" Width="60"/>
+        <DataGridTemplateColumn Header="進捗" Width="110">
+          <DataGridTemplateColumn.CellTemplate>
+            <DataTemplate>
+              <ProgressBar Height="12" Minimum="0" Maximum="100" Value="{Binding Progress}"
+                           Margin="2,0"/>
+            </DataTemplate>
+          </DataGridTemplateColumn.CellTemplate>
+        </DataGridTemplateColumn>
+        <DataGridTextColumn Header="結果" Binding="{Binding Detail}" Width="2*"/>
+      </DataGrid.Columns>
+    </DataGrid>
+
+    <!-- キュー操作 -->
+    <StackPanel Grid.Row="6" Orientation="Horizontal" Margin="0,0,0,6">
+      <Button x:Name="StartBtn" Content="キュー開始" Width="110" Height="30" Margin="0,0,8,0"
+              FontWeight="Bold" IsEnabled="False" Click="StartBtn_Click"/>
+      <Button x:Name="StopBtn" Content="停止" Width="80" Height="30" Margin="0,0,20,0"
+              IsEnabled="False" Click="StopBtn_Click"/>
+      <Button x:Name="UpBtn" Content="上へ" Width="60" Height="30" Margin="0,0,6,0" Click="UpBtn_Click"/>
+      <Button x:Name="DownBtn" Content="下へ" Width="60" Height="30" Margin="0,0,6,0" Click="DownBtn_Click"/>
+      <Button x:Name="RemoveBtn" Content="削除" Width="70" Height="30" Margin="0,0,6,0" Click="RemoveBtn_Click"/>
+      <Button x:Name="ClearBtn" Content="完了分を消す" Width="110" Height="30" Margin="0,0,6,0" Click="ClearBtn_Click"/>
+      <Button x:Name="OpenBtn" Content="出力先を開く" Width="110" Height="30" IsEnabled="False" Click="OpenBtn_Click"/>
+    </StackPanel>
+
+    <!-- 進捗 -->
+    <Grid Grid.Row="7" Margin="0,0,0,6">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+      </Grid.RowDefinitions>
+      <ProgressBar Grid.Row="0" x:Name="Bar" Height="18" Minimum="0" Maximum="100"/>
+      <TextBlock Grid.Row="1" x:Name="StatusText" Margin="0,4,0,0" Foreground="#505050" Text="待機中"/>
+    </Grid>
+
+    <!-- ログ -->
+    <TextBox Grid.Row="8" x:Name="LogBox" IsReadOnly="True" FontFamily="Consolas" FontSize="11"
+             VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
+             TextWrapping="NoWrap" Background="#1E1E1E" Foreground="#D4D4D4"/>
+  </Grid>
+</Window>

@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="FfmpegSizeTuner.App/FfmpegSizeTuner.App.csproj" />
+  <Project Path="FfmpegSizeTuner.Core/FfmpegSizeTuner.Core.csproj" />
+  <Project Path="FfmpegSizeTuner.Tests/FfmpegSizeTuner.Tests.csproj" />
+</Solution>

@@ -1,0 +1,13 @@
+# ビルド成果物
+bin/
+obj/
+publish/
+
+# Visual Studio / Rider
+.vs/
+.idea/
+*.user
+*.suo
+
+# ローカルの一時物
+*.log
